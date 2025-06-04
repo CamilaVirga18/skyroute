@@ -1,11 +1,11 @@
+
 from datetime import datetime, timedelta
-from gestion_clientes import clientes, ver_clientes
-from gestion_destinos import destinos, ver_destinos
+from conexion_base_datos import ver_clientes as db_ver_clientes, \
+                                ver_destinos as db_ver_destinos, \
+                                ver_ventas as db_ver_ventas, \
+                                registrar_venta as db_registrar_venta, \
+                                anular_venta as db_anular_venta
 
-ventas = []
-
-def generar_venta_id():
-    return len(ventas) + 1
 
 def gestionar_ventas():
     while True:
@@ -30,92 +30,117 @@ def gestionar_ventas():
 
 def registrar_venta():
     print("\n--- REGISTRAR VENTA ---")
-    ver_clientes()
-    cuit_cliente = input("Ingrese el CUIT del cliente que realiza la compra: ")
-    if cuit_cliente not in clientes:
-        print("No existe un cliente con ese CUIT.")
+
+    clientes_disponibles = db_ver_clientes()
+    if not clientes_disponibles:
+        print("No hay clientes registrados.")
         return
 
-    ver_destinos()
-    destino_id = int(input("Ingrese el ID del destino del viaje: "))
-    if destino_id not in destinos:
-        print("No existe un destino con ese ID.")
+    print("\n--- CLIENTES DISPONIBLES ---")
+    for cliente in clientes_disponibles:
+        print(f"CUIT: {cliente['cuit']}, Razón Social: {cliente['razon_social']}")
+    cuit_cliente = input("Ingrese el CUIT del cliente: ")
+
+    cliente_encontrado = None
+    for c in clientes_disponibles:
+        if c['cuit'] == cuit_cliente:
+            cliente_encontrado = c
+            break
+
+    if not cliente_encontrado:
+        print("Cliente no encontrado.")
         return
 
-    fecha_venta = datetime.now()
-    costo = float(input("Ingrese el costo del viaje: "))
+    destinos_disponibles = db_ver_destinos()
+    if not destinos_disponibles:
+        print("No hay destinos registrados.")
+        return
 
-    venta_id = generar_venta_id()
-    venta = {
-        "venta_id": venta_id,
-        "cuit_cliente": cuit_cliente,
-        "destino_id": destino_id,
-        "fecha_venta": fecha_venta,
-        "costo": costo,
-        "estado": "Activa"
-    }
-    ventas.append(venta)
-    print("Venta registrada con éxito.")
+    print("\n--- DESTINOS DISPONIBLES ---")
+    for destino in destinos_disponibles:
+        print(f"ID: {destino['id']}, País: {destino['pais']}, Ciudad: {destino['ciudad']}, Costo Base: {destino['costo_base']:.2f}")
+
+    try:
+        id_destino = int(input("Ingrese el ID del destino: "))
+    except ValueError:
+        print("ID de destino inválido.")
+        return
+
+    destino_encontrado = None
+    for d in destinos_disponibles:
+        if d['id'] == id_destino:
+            destino_encontrado = d
+            break
+
+    if not destino_encontrado:
+        print("Destino no encontrado.")
+        return
+
+    costo_venta = destino_encontrado['costo_base']
+
+    if db_registrar_venta(cuit_cliente, id_destino, costo_venta):
+        print("Venta registrada con éxito.")
+    else:
+        print("Error al registrar la venta.")
 
 def ver_ventas():
-    print("\n--- LISTA DE VENTAS ---")
-    if not ventas:
+    print("\n--- LISTA DE VENTAS REGISTRADAS ---")
+    ventas_db = db_ver_ventas()
+    if not ventas_db:
         print("No hay ventas registradas.")
     else:
-        for venta in ventas:
-            fecha = venta["fecha_venta"].strftime("%Y-%m-%d")
-            print(f"Venta ID: {venta['venta_id']}, Cliente: {venta['cuit_cliente']}, Destino ID: {venta['destino_id']}, Fecha: {fecha}, Costo: {venta['costo']}, Estado: {venta['estado']}")
+        for venta in ventas_db:
+            fecha_venta_str = venta['fecha_venta'].strftime("%Y-%m-%d %H:%M:%S") if isinstance(venta['fecha_venta'], datetime) else "N/A"
+            fecha_anulacion_str = venta['fecha_anulacion'].strftime("%Y-%m-%d %H:%M:%S") if isinstance(venta['fecha_anulacion'], datetime) else "N/A"
+            print(f"ID Venta: {venta['id']}, Fecha: {fecha_venta_str}, Cliente: {venta['cuit']}, "
+                  f"Destino ID: {venta['id']}, Costo: {venta['costo']:.2f}, " 
+                  f"Estado: {venta['estado']}")
 
 def boton_arrepentimiento():
     while True:
         print("\n-- BOTÓN DE ARREPENTIMIENTO --")
-        print("1. Ver Ventas Anuladas")
-        print("2. Anular Venta Reciente")
+        print("1. Anular Venta Reciente")
+        print("2. Ver Ventas Anuladas")
         print("3. Volver al Menú Principal")
 
         opcion_arrepentimiento = input("Seleccione una opción: ")
 
         if opcion_arrepentimiento == "1":
-            print(">> Eligió opción 1: Ver Ventas Anuladas")
-            ver_ventas_anuladas()
-        elif opcion_arrepentimiento == "2":
-            print(">> Eligió opción 2: Anular Venta Reciente")
+            print(">> Eligió opción 1: Anular Venta Reciente")
             anular_venta()
+        elif opcion_arrepentimiento == "2":
+            print(">> Eligió opción 2: Ver Ventas Anuladas")
+            ver_ventas_anuladas()
         elif opcion_arrepentimiento == "3":
-            print(">> Salió de 'Boton de Arrepentimiento'")
+            print(">> Salió de 'Botón de Arrepentimiento'")
             break
         else:
             print("Opción no válida.")
 
 def anular_venta():
-    print("\n--- ANULAR VENTA RECIENTE ---")
-    venta_id = int(input("Ingrese el ID de la venta que desea anular: "))
-    ahora = datetime.now()
+    print("\n--- ANULAR VENTA RECIENTE ---\n")
+    try:
+        venta_id = int(input("Ingrese el ID de la venta que desea anular: "))
+        ahora = datetime.now()
+    except ValueError:
+        print("ID de venta inválido.")
+        return
 
-    for venta in ventas:
-        if venta["venta_id"] == venta_id:
-            if venta["estado"] == "Anulada":
-                print("La venta ya fue anulada.")
-                return
-            tiempo_venta = venta["fecha_venta"]
-            if ahora - tiempo_venta <= timedelta(minutes=5):
-                venta["estado"] = "Anulada"
-                venta["fecha_anulacion"] = ahora
-                print("Venta anulada con éxito.")
-            else:
-                print("La venta no puede anularse porque pasaron más de 10 minutos.")
-            return
-    print("No se encontró ninguna venta con ese ID.")
+    if db_anular_venta(venta_id):
+        print("Venta anulada con éxito.")
+   
 
 def ver_ventas_anuladas():
     print("\n--- LISTA DE VENTAS ANULADAS ---")
-    anuladas = [venta for venta in ventas if venta["estado"] == "Anulada"]
+    ventas = db_ver_ventas()
+    anuladas = [venta for venta in ventas if venta.get("estado") == "Anulada"]
 
     if not anuladas:
         print("No hay ventas anuladas registradas.")
     else:
         for venta in anuladas:
-            fecha = venta.get("fecha_anulacion", "Fecha no disponible")
-            if isinstance(fecha, datetime):
-                fecha = fecha.strftime("%Y-%m-%d %H:%M:%S")
-            print(f"Venta ID: {venta['venta_id']}, Cliente: {venta['cuit_cliente']}, Destino ID: {venta['destino_id']}, Fecha de Anulación: {fecha}")
+            fecha_venta_str = venta['fecha_venta'].strftime("%Y-%m-%d %H:%M:%S") if isinstance(venta['fecha_venta'], datetime) else "N/A"
+            fecha_anulacion_str = venta['fecha_anulacion'].strftime("%Y-%m-%d %H:%M:%S") if isinstance(venta['fecha_anulacion'], datetime) else "N/A"
+            print(f"ID Venta: {venta['id']}, Fecha Venta: {fecha_venta_str}, Cliente: {venta['cuit']}, "
+                  f"Destino ID: {venta['id']}, Costo: {venta['costo']:.2f}, " 
+                  f"Fecha Anulación: {fecha_anulacion_str}")
