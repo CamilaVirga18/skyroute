@@ -1,7 +1,8 @@
-destinos = {}
 
-def generar_destino_id():
-    return len(destinos) + 1
+from conexion_base_datos import ver_destinos as db_ver_destinos, \
+                                agregar_destino as db_agregar_destino, \
+                                modificar_destino as db_modificar_destino, \
+                                eliminar_destino as db_eliminar_destino
 
 def gestionar_destinos():
     while True:
@@ -34,47 +35,75 @@ def gestionar_destinos():
 
 def ver_destinos():
     print("\n--- LISTA DE DESTINOS ---")
-    if not destinos:
+    destinos_db = db_ver_destinos() 
+    if not destinos_db:
         print("No hay destinos registrados.")
     else:
-        for destino_id, destino in destinos.items():
-            print(f"Destino ID: {destino_id}, País: {destino['pais']}, Ciudad: {destino['ciudad']}, Costo Base: {destino['costo_base']}")
+        for destino in destinos_db:
+            print(f"ID: {destino['id']}, País: {destino['pais']}, Ciudad: {destino['ciudad']}, Costo Base: {destino['costo_base']:.2f}")
 
 def agregar_destino():
     print("\n--- AGREGAR DESTINO ---")
-    pais = input("Ingrese el País del destino: ")
-    ciudad = input("Ingrese la Ciudad del destino: ")
-    costo_base = float(input("Ingrese el Costo Base del viaje: "))
-
-    destino_id = generar_destino_id()
-    destinos[destino_id] = {
-        "pais": pais,
-        "ciudad": ciudad,
-        "costo_base": costo_base
-    }
-    print("Destino agregado con éxito.")
+    pais = input("Ingrese el País: ")
+    ciudad = input("Ingrese la Ciudad: ")
+    try:
+        costo_base = float(input("Ingrese el Costo Base: "))
+    except ValueError:
+        print("Costo base inválido. Por favor, ingrese un número.")
+        return
+    
+    if db_agregar_destino(pais, ciudad, costo_base): 
+        print("Destino agregado con éxito.")
+    else:
+        print("Error al agregar destino.")
 
 def modificar_destino():
     print("\n--- MODIFICAR DESTINO ---")
-    destino_id = int(input("Ingrese el ID del destino a modificar: "))
-    if destino_id in destinos:
+    try:
+        destino_id = int(input("Ingrese el ID del destino a modificar: "))
+    except ValueError:
+        print("ID de destino inválido. Por favor, ingrese un número.")
+        return
+
+    
+    destinos_existentes = db_ver_destinos()
+    destino_encontrado = False
+    for d in destinos_existentes:
+        if d['id'] == destino_id:
+            destino_encontrado = True
+            break
+
+    if destino_encontrado:
         nuevo_pais = input("Ingrese el nuevo País: ")
         nueva_ciudad = input("Ingrese la nueva Ciudad: ")
-        nuevo_costo_base = float(input("Ingrese el nuevo Costo Base: "))
-        destinos[destino_id] = {
-            "pais": nuevo_pais,
-            "ciudad": nueva_ciudad,
-            "costo_base": nuevo_costo_base
-        }
-        print("Destino modificado con éxito.")
+        try:
+            nuevo_costo_base = float(input("Ingrese el nuevo Costo Base: "))
+        except ValueError:
+            print("Costo base inválido. Por favor, ingrese un número.")
+            return
+
+        if db_modificar_destino(destino_id, nuevo_pais, nueva_ciudad, nuevo_costo_base): 
+            print("Destino modificado con éxito.")
+        else:
+            print("Error al modificar destino.")
     else:
         print("No existe un destino con ese ID.")
 
 def eliminar_destino():
     print("\n--- ELIMINAR DESTINO ---")
-    destino_id = int(input("Ingrese el ID del destino a eliminar: "))
-    if destino_id in destinos:
-        del destinos[destino_id]
+    try:
+        destino_id = int(input("Ingrese el ID del destino a eliminar: "))
+    except ValueError:
+        print("ID de destino inválido. Por favor, ingrese un número.")
+        return
+    
+   
+    destinos_existentes = db_ver_destinos()
+    if not any(d['id'] == destino_id for d in destinos_existentes):
+        print("No existe un destino con ese ID.")
+        return
+
+    if db_eliminar_destino(destino_id): 
         print("Destino eliminado con éxito.")
     else:
-        print("No existe un destino con ese ID.")
+        print("Error al eliminar destino.")
