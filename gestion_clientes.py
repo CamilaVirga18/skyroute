@@ -1,4 +1,8 @@
-clientes = {}
+
+from conexion_base_datos import ver_clientes as db_ver_clientes, \
+                                agregar_cliente as db_agregar_cliente, \
+                                modificar_cliente as db_modificar_cliente, \
+                                eliminar_cliente as db_eliminar_cliente
 
 def gestionar_clientes():
     while True:
@@ -31,50 +35,67 @@ def gestionar_clientes():
 
 def ver_clientes():
     print("\n--- LISTA DE CLIENTES ---")
-    if not clientes:
+    clientes_db = db_ver_clientes() #
+    if not clientes_db:
         print("No hay clientes registrados.")
     else:
-        for cuit, cliente in clientes.items():
-            print(f"CUIT: {cuit}, Razón Social: {cliente['razon_social']}, Correo: {cliente['correo_contacto']}")
+        for cliente in clientes_db:
+            print(f"CUIT: {cliente['cuit']}, Razón Social: {cliente['razon_social']}, Correo: {cliente['correo_contacto']}")
 
 def agregar_cliente():
     print("\n--- AGREGAR CLIENTE ---")
-    razon_social = input("Ingrese la razon social: ")
-    cuit = input("Ingrese el CUIT : ")
-    correo_contacto = input("Ingrese el correo: ")
+    cuit = input("Ingrese el CUIT del cliente: ")
 
-    if cuit not in clientes:
-        clientes[cuit] = {
-            "razon_social": razon_social,
-            "correo_contacto": correo_contacto
-        }
+  
+    clientes_existentes = db_ver_clientes()
+    if any(c['cuit'] == cuit for c in clientes_existentes):
+        print("Error: Ya existe un cliente con ese CUIT.")
+        return
+
+    razon_social = input("Ingrese la Razón Social: ")
+    correo_contacto = input("Ingrese el Correo de Contacto: ")
+    
+    if db_agregar_cliente(cuit, razon_social, correo_contacto): 
         print("Cliente agregado con éxito.")
     else:
-        print("Ya existe un cliente con ese CUIT.")
+        print("Error al agregar cliente.")
 
 def modificar_cliente():
     print("\n--- MODIFICAR CLIENTE (incluye cambio de CUIT) ---")
     cuit = input("Ingrese el CUIT del cliente a modificar: ")
-    if cuit in clientes:
-        nuevo_cuit = input("Ingrese el nuevo CUIT: ")
-        nuevo_razon = input("Ingrese la nueva razon social: ")
-        nuevo_correo_contacto = input("Ingrese el nuevo Correo de Contacto: ")
+    
+    
+    clientes_existentes = db_ver_clientes()
+    cliente_encontrado = None
+    for c in clientes_existentes:
+        if c['cuit'] == cuit:
+            cliente_encontrado = c
+            break
 
-        clientes[nuevo_cuit] = {
-            "razon_social": nuevo_razon,
-            "correo_contacto": nuevo_correo_contacto
-        }
-        if nuevo_cuit != cuit:
-            del clientes[cuit]
-        print("Cliente modificado con éxito.")
+    if cliente_encontrado:
+        nuevo_cuit = input(f"Ingrese el nuevo CUIT (actual: {cliente_encontrado['cuit']}): ")
+        nuevo_razon = input(f"Ingrese la nueva razon social (actual: {cliente_encontrado['razon_social']}): ")
+        nuevo_correo_contacto = input(f"Ingrese el nuevo Correo de Contacto (actual: {cliente_encontrado['correo_contacto']}): ")
+        
+        
+        if db_modificar_cliente(cuit, nuevo_cuit, nuevo_razon, nuevo_correo_contacto):
+            print("Cliente modificado con éxito.")
+        else:
+            print("Error al modificar cliente.")
     else:
         print("No existe un cliente con ese CUIT.")
 
 def eliminar_cliente():
     print("\n--- ELIMINAR CLIENTE ---")
     cuit = input("Ingrese el CUIT del cliente a eliminar: ")
-    if cuit in clientes:
-        del clientes[cuit]
+    
+    
+    clientes_existentes = db_ver_clientes()
+    if not any(c['cuit'] == cuit for c in clientes_existentes):
+        print("No existe un cliente con ese CUIT.")
+        return
+
+    if db_eliminar_cliente(cuit): 
         print("Cliente eliminado con éxito.")
     else:
-        print("No existe un cliente con ese CUIT.")
+        print("Error al eliminar cliente.")
