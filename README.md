@@ -18,10 +18,11 @@ Camila Rocio Virga - DNI: 46453956 <br>
 1. Asegurarnos de tener la version correcta de Python instalada en un editor de codigo
 2. Abrir la carpeta Skyroute en el editor
 3. Abrir el archivo `main.py`
-4. ejecutar el programa
+4. Ejecutar el programa
 
 # DETALLE DE LO QUE HAY EN EL REPOSITORIO:
 📁 SkyRoute/  <br>
+├── .gitignore  <br>
 ├── config.py  <br>
 ├── main.py  <br>
 ├── gestion_clientes.py  <br>
