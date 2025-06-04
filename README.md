@@ -27,6 +27,6 @@ Camila Rocio Virga - DNI: 46453956 <br>
 ├── gestion_clientes.py  <br>
 ├── gestion_destinos.py  <br>
 ├── gestion_ventas.py  <br>
-├── conexion_base_datos.py 
-├── README.md  
+├── conexion_base_datos.py   <br> 
+├── README.md  <br>
 
