@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 
 def get_db_connection():
-    """Establece y retorna una conexión a la base de datos."""
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
         if connection.is_connected():
@@ -18,7 +17,6 @@ def get_db_connection():
 
 
 def ver_clientes():
-    """Recupera todos los clientes de la base de datos."""
     clientes = []
     connection = get_db_connection()
     if connection:
@@ -35,7 +33,6 @@ def ver_clientes():
     return clientes
 
 def agregar_cliente(cuit, razon_social, correo_contacto):
-    """Agrega un nuevo cliente a la base de datos."""
     connection = get_db_connection()
     if connection:
         try:
@@ -54,7 +51,6 @@ def agregar_cliente(cuit, razon_social, correo_contacto):
     return False
 
 def modificar_cliente(cuit_original, nuevo_cuit, nueva_razon_social, nuevo_correo_contacto):
-    """Modifica un cliente existente en la base de datos."""
     connection = get_db_connection()
     if connection:
         try:
@@ -73,7 +69,6 @@ def modificar_cliente(cuit_original, nuevo_cuit, nueva_razon_social, nuevo_corre
     return False
 
 def eliminar_cliente(cuit):
-    """Elimina un cliente de la base de datos."""
     connection = get_db_connection()
     if connection:
         try:
@@ -93,7 +88,6 @@ def eliminar_cliente(cuit):
 
 
 def ver_destinos():
-    """Recupera todos los destinos de la base de datos."""
     destinos = []
     connection = get_db_connection()
     if connection:
@@ -110,7 +104,6 @@ def ver_destinos():
     return destinos
 
 def agregar_destino(pais, ciudad, costo_base):
-    """Agrega un nuevo destino a la base de datos."""
     connection = get_db_connection()
     if connection:
         try:
@@ -129,7 +122,6 @@ def agregar_destino(pais, ciudad, costo_base):
     return False
 
 def modificar_destino(destino_id, nuevo_pais, nueva_ciudad, nuevo_costo_base):
-    """Modifica un destino existente en la base de datos."""
     connection = get_db_connection()
     if connection:
         try:
@@ -148,7 +140,6 @@ def modificar_destino(destino_id, nuevo_pais, nueva_ciudad, nuevo_costo_base):
     return False
 
 def eliminar_destino(destino_id):
-    """Elimina un destino de la base de datos."""
     connection = get_db_connection()
     if connection:
         try:
@@ -168,7 +159,6 @@ def eliminar_destino(destino_id):
 
 
 def ver_ventas():
-    """Recupera todas las ventas de la base de datos, incluyendo la información del cliente y destino."""
     ventas = []
     connection = get_db_connection()
     if connection:
@@ -194,7 +184,6 @@ def ver_ventas():
     return ventas
 
 def registrar_venta(cuit_cliente, destino_id, costo):
-    """Registra una nueva venta en la base de datos."""
     connection = get_db_connection()
     if connection:
         try:
@@ -214,7 +203,6 @@ def registrar_venta(cuit_cliente, destino_id, costo):
     return False
 
 def anular_venta(venta_id):
-    """Anula una venta si se encuentra dentro del plazo de 24 horas."""
     connection = get_db_connection()
     if connection:
         try:
